@@ -140,6 +140,7 @@ import {
 } from '@/service/historyService'
 import type { HistoryItem } from '@/service/historyService'
 import { format } from 'date-fns'
+import { fetchUserInfo } from '@/service/authService'
 
 // 引入 authStore
 const authStore = useAuthStore()
@@ -441,6 +442,12 @@ const sendMessage = async () => {
       isQuestion: false,
     }
     messages.value.push(aiMessage)
+
+    // 更新用户数据
+    const latestUserInfo = await fetchUserInfo(userId.value)
+    // console.log("latestUserInfo:", latestUserInfo)
+    authStore.updateUserInfo(latestUserInfo) // 更新 store 数据
+    // console.log('用户数据已更新: ', model_quota)
   } catch (error) {
     console.error('获取 AI 回复失败:', error)
     messages.value.push({
@@ -543,6 +550,7 @@ const onLogout = () => {
   padding: 0;
   width: 24px;
   height: 24px;
+  margin-left: 2px;
 }
 
 .new-chat-icon svg {

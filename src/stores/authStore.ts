@@ -33,6 +33,12 @@ export const useAuthStore = defineStore('authStore', {
       localStorage.setItem('user_id', userInfo.user_id)
       localStorage.setItem('model_quota', userInfo.model_quota)
     },
+    updateUserInfo(updates) {
+      if (this.userInfo) {
+        this.userInfo = { ...this.userInfo, ...updates }
+        localStorage.setItem('userInfo', JSON.stringify(this.userInfo)) // 同步到 localStorage
+      }
+    },
     logout() {
       this.isAuthenticated = false
       this.userInfo = null

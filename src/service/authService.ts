@@ -21,3 +21,19 @@ export const login = async (username: string, password: string) => {
     throw error // 抛出错误供调用者处理
   }
 }
+
+
+/**
+ * 获取用户详情
+ * @param userId 用户 ID
+ * @returns 用户详情
+ */
+export const fetchUserInfo = async (userId: number) => {
+  try {
+    const response = await api.get(`/auth/${userId}`)
+    return response.data
+  } catch (error) {
+    console.error('获取用户信息失败:', error)
+    throw error
+  }
+}
