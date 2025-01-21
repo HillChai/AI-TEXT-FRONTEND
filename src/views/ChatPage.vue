@@ -121,6 +121,7 @@
         <!-- 显示用户名 -->
         <li class="username-display">{{ username }}</li>
         <li class="username-display">剩余可用次数: {{ model_quota }}</li>
+        <li class="username-display">{{ membership_type }}会员</li>
         <li @click="onLogout">注销</li>
       </ul>
     </div>
@@ -155,8 +156,9 @@ const iconRef = ref<HTMLElement | null>(null) // 图标的 DOM 引用
 const isLoggedIn = computed(() => !!authStore.isAuthenticated) // 是否已登录
 const username = computed(() => authStore.userInfo?.username || '已登录') // 显示用户名
 // 通过 computed 动态计算 userId
-const userId = computed<number>(() => authStore.userInfo?.user_id || 0)
+const user_id = computed<number>(() => authStore.userInfo?.user_id || 0)
 const model_quota = computed<number>(() => authStore.userInfo?.model_quota || 0)
+const membership_type = computed<string>(() => authStore.userInfo?.membership_type || '无')
 
 // 模版选择
 const promptId = 1
@@ -277,15 +279,17 @@ const currentPage = ref(1)
 // 加载历史记录
 const loadHistory = async (page = 1, limit = 10) => {
   try {
-    // console.log('加载的历史记录数据:', chatHistory.value)
 
-    if (!userId.value) {
-      console.error('Invalid userId:', userId.value)
+    if (!user_id.value) {
+      console.error('Invalid userId:', user_id.value)
       return
     }
-    const data = await fetchQuestionHistory(8, page, limit)
 
-    // console.log('后端返回的数据:', data)
+    console.log('加载的历史记录数据:', chatHistory.value)
+
+    const data = await fetchQuestionHistory(user_id.value, page, limit)
+
+    console.log('后端返回的数据:', data)
 
     // 按日期降序排序
     data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())

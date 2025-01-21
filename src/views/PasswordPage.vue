@@ -61,15 +61,16 @@ export default defineComponent({
           // 调用登录服务
           const result = await login(email.value, password.value)
 
-          // console.log(result.user)
+          console.log("result:",result)
 
           // 将 token 和部分用户信息存储到 localStorage，以便跨会话持久化
-          localStorage.setItem('access_token', result.access_token)
-          localStorage.setItem('user_id', result.user.user_id)
-          localStorage.setItem('username', result.user.username)
-          localStorage.setItem('status', result.user.status)
-          localStorage.setItem('model_quota', result.user.model_quota.toString())
-
+          // 使用 authStore 的 login 方法处理状态更新
+          authStore.login(result.access_token, {
+            username: result.user.username,
+            user_id: result.user.user_id,
+            model_quota: result.user.model_quota.toString(),
+            membership_type: result.user.membership_type,
+          })
           // alert('登录成功！')
           router.push('/chat') // 跳转到主页面
         }

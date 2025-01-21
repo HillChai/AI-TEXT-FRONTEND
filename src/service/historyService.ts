@@ -23,13 +23,13 @@ const API_ENDPOINTS = {
 
 // 定义 fetchQuestionHistory 方法
 export const fetchQuestionHistory = async (
-  userId: number,
+  user_id: number,
   page: number = 1,
   limit: number = 10,
 ): Promise<HistoryItem[]> => {
   try {
     const response = await api.get<HistoryItem[]>(API_ENDPOINTS.HISTORY, {
-      params: { user_id: userId, page, limit },
+      params: { user_id, page, limit },
     })
     return response.data
   } catch (error) {
