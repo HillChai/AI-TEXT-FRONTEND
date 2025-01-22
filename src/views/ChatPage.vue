@@ -277,7 +277,7 @@ const selectedDate = ref('') // 当前选中的日期
 const currentPage = ref(1)
 
 // 加载历史记录
-const loadHistory = async (page = 1, limit = 10) => {
+const loadHistory = async (limit = 10) => {
   try {
 
     if (!user_id.value) {
@@ -286,8 +286,8 @@ const loadHistory = async (page = 1, limit = 10) => {
     }
 
     console.log('加载的历史记录数据:', chatHistory.value)
-
-    const data = await fetchQuestionHistory(user_id.value, page, limit)
+    console.log('currentPage.value:', currentPage.value)
+    const data = await fetchQuestionHistory(currentPage.value, limit)
 
     console.log('后端返回的数据:', data)
 
@@ -380,9 +380,10 @@ const selectChat = (item: HistoryItem) => {
 const loadMoreHistory = async () => {
   try {
     const nextPage = currentPage.value + 1
+    console.log("nextPage: ", nextPage)
     // console.log('userId:', userId.value)
 
-    const moreHistory = await fetchQuestionHistory(userId.value, nextPage, 10)
+    const moreHistory = await fetchQuestionHistory(user_id.value, nextPage, 10)
     if (moreHistory.length === 0) {
       console.log('没有更多历史记录')
       return
@@ -434,7 +435,7 @@ const sendMessage = async () => {
   isLoading.value = true // 开启加载状态
 
   try {
-    const aiResponse = await fetchGPTResponse(currentInput, promptId, userId.value)
+    const aiResponse = await fetchGPTResponse(currentInput, promptId, user_id.value)
 
     // 添加 AI 回复
     const aiMessage = {
@@ -448,7 +449,7 @@ const sendMessage = async () => {
     messages.value.push(aiMessage)
 
     // 更新用户数据
-    const latestUserInfo = await fetchUserInfo(userId.value)
+    const latestUserInfo = await fetchUserInfo(user_id.value)
     // console.log("latestUserInfo:", latestUserInfo)
     authStore.updateUserInfo(latestUserInfo) // 更新 store 数据
     // console.log('用户数据已更新: ', model_quota)
@@ -500,6 +501,7 @@ onMounted(async () => {
   document.addEventListener('click', handleClickOutside)
 
   try {
+    currentPage.value = 1; // 初始化页码
     await loadHistory()
   } catch (error) {
     console.error('初始化加载历史记录失败:', error)

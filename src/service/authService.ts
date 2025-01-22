@@ -15,6 +15,11 @@ export const register = async (username: string, password: string) => {
 export const login = async (username: string, password: string) => {
   try {
     const response = await api.post('/auth/login', { username, password })
+    const { access_token } = response.data
+
+    // 将 access_token 存储到 localStorage
+    localStorage.setItem('access_token', access_token)
+
     return response.data // 返回包含 access_token 的对象
   } catch (error) {
     console.error('登录失败:', error)

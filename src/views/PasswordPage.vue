@@ -61,7 +61,7 @@ export default defineComponent({
           // 调用登录服务
           const result = await login(email.value, password.value)
 
-          console.log("result:",result)
+          // console.log("result:",result)
 
           // 将 token 和部分用户信息存储到 localStorage，以便跨会话持久化
           // 使用 authStore 的 login 方法处理状态更新
