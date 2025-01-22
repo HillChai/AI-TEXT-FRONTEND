@@ -573,7 +573,7 @@ const onLogout = () => {
 /* 左侧历史记录 */
 .sidebar {
   width: 20%;
-  height: 100%; /* 确保高度填充父容器 */
+  height: calc(100vh - 20px); /* 设置为视口高度减去一定边距 */
   background: #f8f9fa;
   padding: 20px;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
