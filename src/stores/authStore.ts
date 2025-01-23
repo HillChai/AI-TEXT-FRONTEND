@@ -3,6 +3,7 @@ import { defineStore } from 'pinia'
 interface UserInfo {
   username: string
   user_id: string
+  prompt_ids: number[]
   model_quota: string
   membership_type: string
 }
@@ -15,44 +16,39 @@ export const useAuthStore = defineStore('authStore', {
   actions: {
     initialize() {
       const token = localStorage.getItem('access_token')
-      const username = localStorage.getItem('username')
-      const userId = localStorage.getItem('user_id')
-      const model_quota = localStorage.getItem('model_quota')
-      const membership_type = localStorage.getItem('membership_type')
+      const userInfoString = localStorage.getItem('userInfo')
 
-      if (token && username && userId && model_quota) {
-        this.isAuthenticated = true
-        this.userInfo = { 
-          username: username, 
-          user_id: userId, 
-          model_quota: model_quota, 
-          membership_type: membership_type
+      if (token && userInfoString) {
+        try {
+          const parsedUserInfo: UserInfo = JSON.parse(userInfoString)
+          
+          // 确保 prompt_ids 存在并为数组
+          if (!parsedUserInfo.prompt_ids) {
+            parsedUserInfo.prompt_ids = []
+          } 
+          
+          this.isAuthenticated = true
+          this.userInfo = parsedUserInfo
+        } catch (error) {
+          console.error("Failed to parse userInfo from localStorage:", error)
         }
       }
     },
-    login(
-      token: string, 
-      userInfo: { 
-        username: string,
-        user_id: string,
-        model_quota: string,
-        membership_type: string
-      }
-    ) {
+    login(token: string, userInfo: UserInfo) {
       this.isAuthenticated = true
       this.userInfo = userInfo
 
       // 持久化到 localStorage
       localStorage.setItem('access_token', token)
-      localStorage.setItem('username', userInfo.username)
-      localStorage.setItem('user_id', userInfo.user_id)
-      localStorage.setItem('model_quota', userInfo.model_quota)
-      localStorage.setItem('membership_type', userInfo.membership_type)
+      localStorage.setItem('userInfo', JSON.stringify(userInfo))
     },
-    updateUserInfo(updates) {
+    updateUserInfo(updates: Partial<UserInfo>) {
       if (this.userInfo) {
+        // 更新 state
         this.userInfo = { ...this.userInfo, ...updates }
-        localStorage.setItem('userInfo', JSON.stringify(this.userInfo)) // 同步到 localStorage
+
+        // 同步更新到 localStorage
+        localStorage.setItem('userInfo', JSON.stringify(this.userInfo))
       }
     },
     logout() {
@@ -61,10 +57,7 @@ export const useAuthStore = defineStore('authStore', {
 
       // 清除 localStorage
       localStorage.removeItem('access_token')
-      localStorage.removeItem('username')
-      localStorage.removeItem('user_id')
-      localStorage.removeItem('model_quota')
-      localStorage.removeItem('membership_type')
+      localStorage.removeItem('userInfo')
     },
   },
 })

@@ -51,28 +51,40 @@ export default defineComponent({
       }
 
       try {
+        // 确保 email.value 是有效的字符串
+        const emailValue =
+          typeof email.value === 'string'
+            ? email.value
+            : Array.isArray(email.value)
+            ? email.value.join(',')
+            : ''
+
+        if (!emailValue) {
+          throw new Error('请输入有效的邮箱地址！')
+        }
+
         if (route.query.from === 'signup') {
           // 调用注册服务
-          await register(email.value, password.value)
-          // alert('注册成功，请登录！')
-          password.value = '' // 清空密码字段
-          router.push('/login') // 跳转到登录页
+          await register(emailValue, password.value)
+
+          // 清空密码字段并跳转到登录页
+          password.value = ''
+          router.push('/login')
         } else {
           // 调用登录服务
-          const result = await login(email.value, password.value)
+          const result = await login(emailValue, password.value)
 
-          // console.log("result:",result)
-
-          // 将 token 和部分用户信息存储到 localStorage，以便跨会话持久化
-          // 使用 authStore 的 login 方法处理状态更新
+          // 调用 Pinia store 的 login 方法
           authStore.login(result.access_token, {
             username: result.user.username,
             user_id: result.user.user_id,
+            prompt_ids: result.user.prompt_ids, // 新增的 prompt_id
             model_quota: result.user.model_quota.toString(),
             membership_type: result.user.membership_type,
           })
-          // alert('登录成功！')
-          router.push('/chat') // 跳转到主页面
+
+          // 跳转到主页面
+          router.push('/chat')
         }
       } catch (error: any) {
         console.error('操作失败:', error)
@@ -99,6 +111,7 @@ export default defineComponent({
   },
 })
 </script>
+
 
 <style scoped>
 .login-container {

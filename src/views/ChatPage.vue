@@ -45,6 +45,23 @@
 
     <!-- 主对话区域 -->
     <div class="chat-container">
+
+      <div class="prompt-selector">
+        <select
+          id="prompt-select"
+          v-model="selectedPromptId"
+          @change="switchPrompt(selectedPromptId)"
+        >
+        <option
+          v-for="id in promptIds"
+          :key="id"
+          :value="id"
+        >
+          老师模版: {{ id }}
+        </option>
+      </select>
+    </div>
+
       <!-- 消息显示区域 -->
       <div class="messages" ref="messageContainer">
         <div v-for="(message, index) in messages" :key="index" class="message-container">
@@ -139,7 +156,6 @@ import {
   updateByContent,
   updateQuestionOrAnswer,
 } from '@/service/historyService'
-import type { HistoryItem } from '@/service/historyService'
 import { format } from 'date-fns'
 import { fetchUserInfo } from '@/service/authService'
 
@@ -161,7 +177,17 @@ const model_quota = computed<number>(() => authStore.userInfo?.model_quota || 0)
 const membership_type = computed<string>(() => authStore.userInfo?.membership_type || '无')
 
 // 模版选择
-const promptId = 1
+// const promptId = 1
+
+// 响应式变量
+const promptIds = computed(() => authStore.userInfo?.prompt_ids || [])
+// 使用页面变量管理当前选择的 prompt_id
+const selectedPromptId = ref<number>(promptIds.value[0] || 0)
+// 切换 prompt
+const switchPrompt = (id: number) => {
+  selectedPromptId.value = id
+  console.log('切换到 Prompt ID:', id)
+}
 
 // 初始化对话内容
 const messages = ref<
@@ -285,11 +311,17 @@ const loadHistory = async (limit = 10) => {
       return
     }
 
-    console.log('加载的历史记录数据:', chatHistory.value)
-    console.log('currentPage.value:', currentPage.value)
+    // console.log('加载的历史记录数据:', chatHistory.value)
     const data = await fetchQuestionHistory(currentPage.value, limit)
 
-    console.log('后端返回的数据:', data)
+    // 处理空数据的情况
+    if (!data || data.length === 0) {
+      console.warn('未找到历史记录，可能是新用户')
+      chatHistory.value = [] // 初始化为空数组
+      return
+    }
+
+    // console.log('后端返回的数据:', data)
 
     // 按日期降序排序
     data.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
@@ -318,11 +350,6 @@ const onScroll = async (event: Event) => {
 const toggleSidebar = () => {
   // console.log('isLoggedIn.value: ', isLoggedIn.value)
   if (isLoggedIn.value) isSidebarCollapsed.value = !isSidebarCollapsed.value
-}
-
-// 模拟生成 AI 回复
-const generateAIResponse = (input: string) => {
-  return `AI 回复: 我理解你的问题 "${input}"，以下是我的答案！`
 }
 
 // 切换到历史记录
@@ -435,7 +462,7 @@ const sendMessage = async () => {
   isLoading.value = true // 开启加载状态
 
   try {
-    const aiResponse = await fetchGPTResponse(currentInput, promptId, user_id.value)
+    const aiResponse = await fetchGPTResponse(currentInput, selectedPromptId.value, user_id.value)
 
     // 添加 AI 回复
     const aiMessage = {
@@ -493,10 +520,17 @@ onMounted(async () => {
   console.log('Initializing AuthStore from LocalStorage...')
   authStore.initialize() // 从 localStorage 初始化 authStore
 
-  console.log('AuthStore Initialized:', {
-    isAuthenticated: authStore.isAuthenticated,
-    userInfo: authStore.userInfo,
-  })
+  // console.log('AuthStore Initialized:', {
+  //   isAuthenticated: authStore.isAuthenticated,
+  //   userInfo: authStore.userInfo,
+  // })
+
+  if (promptIds.value.length > 0) {
+    selectedPromptId.value = promptIds.value[0] // 默认选择第一个 prompt_id
+  } else {
+    console.warn("No prompt IDs available, defaulting to 0")
+    selectedPromptId.value = 0
+  }
 
   document.addEventListener('click', handleClickOutside)
 
@@ -694,7 +728,7 @@ const onLogout = () => {
   border: none;
   cursor: pointer;
   font-size: 1rem;
-  margin-left: 10px;
+  margin-left: 10%;
 }
 
 .edit-icon:hover {
@@ -712,7 +746,7 @@ const onLogout = () => {
 .edit-actions {
   position: absolute; /* 绝对定位到右侧 */
   top: 5%; /* 距顶部 5px */
-  right: 20%; /* 距右侧 5px */
+  right: 10%; /* 距右侧 5px */
   display: flex;
   gap: 5px; /* 按钮之间的间距 */
 }
@@ -767,11 +801,13 @@ const onLogout = () => {
 .message.user {
   background-color: #e8f5e9;
   align-self: flex-end;
+  margin-left: 10%;
 }
 
 .message.ai {
   background-color: #f1f8ff;
   align-self: flex-start;
+  margin-left: 10%;
 }
 
 /* 输入框 */
@@ -910,5 +946,22 @@ const onLogout = () => {
 
 .menu li:hover {
   background-color: #f5f5f5;
+}
+
+.prompt-selector {
+  display: flex;
+  align-items: center;
+  margin-top: 20px;
+  margin-left: 10px;
+}
+
+.prompt-selector select {
+  padding: 5px 10px;
+  font-size: 14px;
+  border-radius: 20px;
+  border: 0px;
+  background-color: #fff;
+  cursor: pointer;
+
 }
 </style>
