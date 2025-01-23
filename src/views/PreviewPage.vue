@@ -12,15 +12,14 @@
         ></div>
 
         <!-- 加载动画 -->
-        <div v-if="isLoading" class="loading-indicator">正在思考...</div>
       </div>
 
       <!-- 输入框 -->
       <div class="input-container">
         <div class="input-box">
-          <input v-model="userInput" :disabled="isLoading" placeholder="告诉我，你的题目" />
+          <input placeholder="告诉我，你的题目" />
           <!-- 发送按钮 -->
-          <button @click="sendMessage" :disabled="isLoading" class="send-button">
+          <button class="send-button">
             <!-- <span class="arrow">↑</span> -->
             <svg
               xmlns="http://www.w3.org/2000/svg"
