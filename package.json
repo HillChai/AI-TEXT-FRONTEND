@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "build:pro": "vite build --mode production",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
     "build-only": "vite build",
@@ -13,6 +14,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@vue/compiler-sfc": "^3.5.13",
     "axios": "^1.7.9",
     "date-fns": "^4.1.0",
     "marked": "^15.0.6",
@@ -32,8 +34,8 @@
     "npm-run-all2": "^7.0.2",
     "prettier": "^3.3.3",
     "typescript": "~5.6.3",
-    "vite": "^6.0.5",
+    "vite": "^6.0.11",
     "vite-plugin-vue-devtools": "^7.6.8",
-    "vue-tsc": "^2.1.10"
+    "vue-tsc": "^2.2.0"
   }
 }

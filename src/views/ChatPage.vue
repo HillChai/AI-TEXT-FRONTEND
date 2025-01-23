@@ -74,7 +74,7 @@
             v-else
             :contenteditable="true"
             :class="['message', message.role, 'editable']"
-            @input="updateMessageContent($event, index)"
+            @input="updateMessageContent($event as InputEvent, index)"
           >
             {{ message.content }}
           </div>
@@ -89,7 +89,7 @@
         </div>
 
         <!-- 加载动画 -->
-        <div v-if="isLoading" class="loading-indicator">正在思考...</div>
+        <div v-if="isLoadingg" class="loading-indicator">正在思考...</div>
       </div>
 
       <!-- 输入框 -->
@@ -97,12 +97,12 @@
         <div class="input-box">
           <input
             v-model="userInput"
-            :disabled="isLoading || loadingMessages"
+            :disabled="isLoadingg || loadingMessages"
             placeholder="告诉我，你的题目"
             maxlength="200"
           />
           <!-- 发送按钮 -->
-          <button @click="sendMessage" :disabled="isLoading" class="send-button">
+          <button @click="sendMessage" :disabled="isLoadingg" class="send-button">
             <!-- <span class="arrow">↑</span> -->
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -158,6 +158,10 @@ import {
 } from '@/service/historyService'
 import { format } from 'date-fns'
 import { fetchUserInfo } from '@/service/authService'
+import type { HistoryItem } from '@/service/historyService'
+
+const isLoadingg = ref<boolean>(false);
+const userInput = ref<string>('');
 
 // 引入 authStore
 const authStore = useAuthStore()
@@ -209,6 +213,66 @@ const messages = ref<
     isQuestion: true,
   },
 ])
+
+// 发送消息
+const sendMessage = async () => {
+  if (!userInput.value.trim()) {
+    console.log('输入不能为空')
+    return
+  }
+
+  const tempId = Date.now() // 使用当前时间戳作为临时 ID
+  const newMessage = {
+    id: tempId,
+    role: 'user',
+    content: userInput.value,
+    original_content: '',
+    isEditing: false,
+    isQuestion: true,
+    originalContent: '', // 初始化为空
+  }
+
+  messages.value.push(newMessage) // 添加临时消息
+  const currentInput = userInput.value
+  userInput.value = '' // 清空输入框
+
+  isLoadingg.value = true // 开启加载状态
+
+  try {
+    const aiResponse = await fetchGPTResponse(currentInput, selectedPromptId.value, user_id.value)
+
+    // 添加 AI 回复
+    const aiMessage = {
+      id: tempId + 1, // 临时 ID，也需要区分
+      role: 'ai',
+      content: aiResponse,
+      original_content: '',
+      isEditing: false,
+      isQuestion: false,
+    }
+    messages.value.push(aiMessage)
+
+    // 更新用户数据
+    const latestUserInfo = await fetchUserInfo(user_id.value)
+    // console.log("latestUserInfo:", latestUserInfo)
+    authStore.updateUserInfo(latestUserInfo) // 更新 store 数据
+    // console.log('用户数据已更新: ', model_quota)
+  } catch (error) {
+    console.error('获取 AI 回复失败:', error)
+    messages.value.push({
+      id: tempId + 2,
+      role: 'ai',
+      content: '无法获取答案，请稍后再试。',
+      original_content: '',
+      isEditing: false,
+      isQuestion: false,
+    })
+  } finally {
+    isLoadingg.value = false
+    scrollToBottom() // 滚动到最新消息
+  }
+}
+
 
 // 保存消息内容
 const saveMessageContent = async (index: number) => {
@@ -293,10 +357,6 @@ const createNewChat = () => {
   console.log('新建对话:', newChat)
 }
 
-// 历史记录示例
-const userInput = ref('') // 用户输入内容
-const isLoading = ref(false) // 是否正在加载
-
 // 获取历史记录
 const chatHistory = ref<HistoryItem[]>([]) // 历史记录的响应式数据
 const selectedDate = ref('') // 当前选中的日期
@@ -373,12 +433,14 @@ const selectChat = (item: HistoryItem) => {
         role: 'user',
         content: q.question_content || '（无问题内容）', // 安全地提供默认值
         isQuestion: true,
+        isEditing: false, // 初始化为 false
       },
       {
         id: q.id || Date.now(),
         role: 'ai',
         content: q.answer_content || '（无答案内容）', // 安全地提供默认值
         isQuestion: false,
+        isEditing: false, // 初始化为 false
       },
     ]
   })
@@ -410,7 +472,7 @@ const loadMoreHistory = async () => {
     console.log("nextPage: ", nextPage)
     // console.log('userId:', userId.value)
 
-    const moreHistory = await fetchQuestionHistory(user_id.value, nextPage, 10)
+    const moreHistory = await fetchQuestionHistory(nextPage, 10)
     if (moreHistory.length === 0) {
       console.log('没有更多历史记录')
       return
@@ -437,64 +499,7 @@ const scrollToBottom = () => {
   })
 }
 
-// 发送消息
-const sendMessage = async () => {
-  if (!userInput.value.trim()) {
-    console.log('输入不能为空')
-    return
-  }
 
-  const tempId = Date.now() // 使用当前时间戳作为临时 ID
-  const newMessage = {
-    id: tempId,
-    role: 'user',
-    content: userInput.value,
-    original_content: '',
-    isEditing: false,
-    isQuestion: true,
-    originalContent: '', // 初始化为空
-  }
-
-  messages.value.push(newMessage) // 添加临时消息
-  const currentInput = userInput.value
-  userInput.value = '' // 清空输入框
-
-  isLoading.value = true // 开启加载状态
-
-  try {
-    const aiResponse = await fetchGPTResponse(currentInput, selectedPromptId.value, user_id.value)
-
-    // 添加 AI 回复
-    const aiMessage = {
-      id: tempId + 1, // 临时 ID，也需要区分
-      role: 'ai',
-      content: aiResponse,
-      original_content: '',
-      isEditing: false,
-      isQuestion: false,
-    }
-    messages.value.push(aiMessage)
-
-    // 更新用户数据
-    const latestUserInfo = await fetchUserInfo(user_id.value)
-    // console.log("latestUserInfo:", latestUserInfo)
-    authStore.updateUserInfo(latestUserInfo) // 更新 store 数据
-    // console.log('用户数据已更新: ', model_quota)
-  } catch (error) {
-    console.error('获取 AI 回复失败:', error)
-    messages.value.push({
-      id: tempId + 2,
-      role: 'ai',
-      content: '无法获取答案，请稍后再试。',
-      original_content: '',
-      isEditing: false,
-      isQuestion: false,
-    })
-  } finally {
-    isLoading.value = false
-    scrollToBottom() // 滚动到最新消息
-  }
-}
 
 // 切换菜单显示状态
 const toggleMenu = () => {
@@ -540,7 +545,7 @@ onMounted(async () => {
   } catch (error) {
     console.error('初始化加载历史记录失败:', error)
   } finally {
-    isLoading.value = false
+    isLoadingg.value = false
     loadingMessages.value = false // 确保输入框解锁
   }
 })

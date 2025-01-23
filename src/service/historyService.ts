@@ -11,7 +11,7 @@ interface Question {
   updated_at: string // 问题更新时间（ISO 格式字符串）
 }
 
-interface HistoryItem {
+export interface HistoryItem {
   date: string // 日期（格式 YYYY-MM-DD）
   questions: Question[] // 当天的问题列表
 }

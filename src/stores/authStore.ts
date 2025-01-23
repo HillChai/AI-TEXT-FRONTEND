@@ -2,9 +2,9 @@ import { defineStore } from 'pinia'
 
 interface UserInfo {
   username: string
-  user_id: string
+  user_id: number
   prompt_ids: number[]
-  model_quota: string
+  model_quota: number
   membership_type: string
 }
 
